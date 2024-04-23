@@ -2,7 +2,7 @@
 wget https://github.com/derailed/k9s/releases/download/v0.32.4/k9s_Linux_amd64.tar.gz
 tar -zxvf k9s_Linux_amd64.tar.gz
 sudo chmod +x k9s
-sudo cp k9s /usr/loca/bin
+sudo cp k9s /usr/local/bin
 
 # helm
 wget https://get.helm.sh/helm-v3.14.4-linux-amd64.tar.gz
