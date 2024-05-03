@@ -1,0 +1,129 @@
+cat <<EOF | sudo tee /etc/keepalived/check_apiserver.sh
+#!/bin/sh
+errorExit() {
+  echo "*** $*" 1>&2
+  exit 1
+}
+curl --silent --max-time 2 --insecure https://localhost:6443/ -o /dev/null || errorExit "Error GET https://localhost:6443/"
+if ip addr | grep -q 10.124.70.200; then
+  curl --silent --max-time 2 --insecure https://10.124.70.200:6443/ -o /dev/null || errorExit "Error GET https://10.124.70.200:6443/"
+fi
+EOF
+sudo chmod +x /etc/keepalived/check_apiserver.sh
+
+cat <<EOF | sudo tee /etc/keepalived/keepalived.conf
+global_defs {
+  router_id LVS_DEVEL
+}
+vrrp_script check_apiserver {
+  script "/etc/keepalived/check_apiserver.sh"
+  interval 3
+  weight -2
+  fall 10
+  rise 2
+}
+vrrp_instance kubernetes-api-server {
+  state MASTER
+  interface eth0
+  virtual_router_id 51
+  advert_int 1
+  priority 100
+  authentication {
+    auth_type PASS
+    auth_pass 42
+  }
+  virtual_ipaddress {
+    10.124.70.200/22
+  }
+  track_script {
+    check_apiserver
+  }
+}
+EOF
+
+cat <<EOF | sudo tee /etc/haproxy/haproxy.cfg
+global
+  log /dev/log  local0
+  log /dev/log  local1 notice
+  chroot /var/lib/haproxy
+  stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+  stats timeout 30s
+  user haproxy
+  group haproxy
+  daemon
+  ca-base /etc/ssl/certs
+  crt-base /etc/ssl/private
+  ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
+  ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+  ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
+defaults
+  log  global
+  mode  http
+  option  httplog
+  option  dontlognull
+  timeout connect 5000
+  timeout client  50000
+  timeout server  50000
+  errorfile 400 /etc/haproxy/errors/400.http
+  errorfile 403 /etc/haproxy/errors/403.http
+  errorfile 408 /etc/haproxy/errors/408.http
+  errorfile 500 /etc/haproxy/errors/500.http
+  errorfile 502 /etc/haproxy/errors/502.http
+  errorfile 503 /etc/haproxy/errors/503.http
+  errorfile 504 /etc/haproxy/errors/504.http
+
+frontend kubernetes-api-server
+  bind *:6443
+  mode tcp
+  option tcplog
+  default_backend kubernetes-api-server
+
+backend kubernetes-api-server
+  mode tcp
+  option tcp-check
+  balance roundrobin
+  server vm-10-124-70-201 10.124.70.201:8443 check
+  server vm-10-124-70-202 10.124.70.202:8443 check
+  server vm-10-124-70-203 10.124.70.203:8443 check
+EOF
+
+sudo service keepalived restart
+sudo service haproxy restart
+
+cat <<EOF | sudo tee /etc/keepalived/keepalived.conf
+global_defs {
+  router_id LVS_DEVEL
+}
+vrrp_script check_apiserver {
+  script "/etc/keepalived/check_apiserver.sh"
+  interval 3
+  weight -2
+  fall 10
+  rise 2
+}
+vrrp_instance kubernetes-api-server {
+  state BACKUP
+  interface eth0
+  virtual_router_id 51
+  advert_int 1
+  priority 99
+  authentication {
+      auth_type PASS
+      auth_pass 42
+  }
+  virtual_ipaddress {
+      10.124.70.200/22
+  }
+  track_script {
+      check_apiserver
+  }
+}
+EOF
+
+sudo kubeadm init --control-plane-endpoint=10.124.70.200:6443 --apiserver-bind-port=8443 --pod-network-cidr=192.168.0.0/16 --upload-certs
+
+sudo kubeadm join 10.124.70.200:6443 \
+        --apiserver-bind-port 8443 \
+        --token <token> \
+        --discovery-token-ca-cert-hash <discovery-token-ca-cert-hash> \
+        --control-plane --certificate-key <certificate-key>
