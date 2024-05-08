@@ -7,5 +7,5 @@ services:
     ports:
       - 8000:8080
     volumes:
-      - ./data:/home/ubuntu/workspace
+      - ./data:/home/ubuntu
     # command: "bash -c 'while true; do echo $(date +\"%Y-%m-%d %H:%M:%S:%N\"); sleep 2; done'"
