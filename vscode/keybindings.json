@@ -1,0 +1,7 @@
+[
+    {
+      "key": "delete",
+      "command": "editor.action.deleteLines",
+      "when": "textInputFocus && !editorReadonly"
+    }
+  ]

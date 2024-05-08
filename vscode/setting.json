@@ -1,0 +1,27 @@
+{
+  "workbench.colorTheme": "One Dark Pro Darker",
+  "workbench.iconTheme": "material-icon-theme",
+  "editor.formatOnSave": true,
+  "editor.wordWrap": "on",
+  "editor.fontFamily": "JetBrains Mono",
+  "editor.fontLigatures": false,
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className",
+    "ngClass",
+    "cx"
+  ],
+  "redhat.telemetry.enabled": true,
+  "editor.tabSize": 2,
+  "autopep8.args": [
+    "--indent-size=2"
+  ],
+  "workbench.editor.enablePreview": false,
+  "scm.showChangesSummary": false,
+  "notebook.output.scrolling": true,
+  "notebook.editorOptionsCustomizations": {
+    "editor.tabSize": 2,
+    "editor.indentSize": 2,
+    "editor.insertSpaces": false
+  }
+}
