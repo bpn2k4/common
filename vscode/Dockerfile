@@ -49,8 +49,6 @@ WORKDIR /home/ubuntu/workspace
 
 COPY --chown=ubuntu:ubuntu ./start.sh ./install-extension.sh /opt/
 
-EXPOSE 1-65535
-
 ENV PATH="${PATH}:/home/ubuntu/.local/bin/code-server/bin:/home/ubuntu/.bun/bin:/usr/local/go/bin:/usr/local/jdk-21/bin"
 ENV JAVA_HOME="/usr/local/jdk-21"
 
