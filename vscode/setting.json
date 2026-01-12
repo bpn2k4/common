@@ -1,27 +1,39 @@
 {
-  "workbench.colorTheme": "One Dark Pro Darker",
-  "workbench.iconTheme": "material-icon-theme",
-  "editor.formatOnSave": true,
-  "editor.wordWrap": "on",
+  "[dockercompose]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "autopep8.args": [
+    "--max-line-length=999",
+    "--indent-size=2"
+  ],
   "editor.fontFamily": "JetBrains Mono",
   "editor.fontLigatures": false,
+  "editor.fontSize": 14,
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.wordWrap": "on",
+  "files.insertFinalNewline": true,
+  "javascript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
+  "notebook.editorOptionsCustomizations": {
+    "editor.indentSize": 2,
+    "editor.insertSpaces": false,
+    "editor.tabSize": 2
+  },
+  "notebook.output.scrolling": true,
+  "redhat.telemetry.enabled": true,
+  "scm.showChangesSummary": false,
   "tailwindCSS.classAttributes": [
     "class",
     "className",
     "ngClass",
     "cx"
   ],
-  "redhat.telemetry.enabled": true,
-  "editor.tabSize": 2,
-  "autopep8.args": [
-    "--indent-size=2"
-  ],
+  "typescript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
+  "update.mode": "none",
+  "workbench.colorTheme": "One Dark Pro Darker",
   "workbench.editor.enablePreview": false,
-  "scm.showChangesSummary": false,
-  "notebook.output.scrolling": true,
-  "notebook.editorOptionsCustomizations": {
-    "editor.tabSize": 2,
-    "editor.indentSize": 2,
-    "editor.insertSpaces": false
-  }
+  "workbench.iconTheme": "material-icon-theme"
 }
