@@ -7,13 +7,14 @@ terraform {
   }
 }
 
-provider "aws" {
-  region = "ap-southeast-1"
-}
+data "aws_caller_identity" "current" {}
 
 locals {
-  name                      = "dev-vs-sgp"
+  account_id                = data.aws_caller_identity.current.account_id
   region                    = "ap-southeast-1"
+  availability_zone_1a      = "${local.region}a"
+  availability_zone_1b      = "${local.region}b"
+  name                      = "dev-vs-sgp"
   vpc_cidr                  = "10.253.0.0/20"
   public_subnet_1a          = "10.253.0.0/26"
   public_subnet_1b          = "10.253.0.64/26"
@@ -31,6 +32,10 @@ locals {
   }
 }
 
+provider "aws" {
+  region = local.region
+}
+
 resource "aws_vpc" "vpc" {
   cidr_block           = local.vpc_cidr
   enable_dns_hostnames = true
@@ -43,10 +48,20 @@ resource "aws_vpc" "vpc" {
   )
 }
 
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.vpc.id
+  tags = merge(
+    {
+      Name = "${local.name}-default-sg"
+    },
+    local.tags,
+  )
+}
+
 resource "aws_subnet" "public_subnet_1a" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.public_subnet_1a
-  availability_zone = "ap-southeast-1a"
+  availability_zone = local.availability_zone_1a
   tags = merge(
     {
       Name = "${local.name}-public-1a"
@@ -58,7 +73,7 @@ resource "aws_subnet" "public_subnet_1a" {
 resource "aws_subnet" "public_subnet_1b" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.public_subnet_1b
-  availability_zone = "ap-southeast-1b"
+  availability_zone = local.availability_zone_1b
   tags = merge(
     {
       Name = "${local.name}-public-1b"
@@ -118,7 +133,7 @@ resource "aws_route_table_association" "public_rt_1b" {
 resource "aws_subnet" "private_app_1a" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.private_app_subnet_1a
-  availability_zone = "ap-southeast-1a"
+  availability_zone = local.availability_zone_1a
   tags = merge(
     {
       Name = "${local.name}-private-app-1a"
@@ -130,7 +145,7 @@ resource "aws_subnet" "private_app_1a" {
 resource "aws_subnet" "private_app_1b" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.private_app_subnet_1b
-  availability_zone = "ap-southeast-1b"
+  availability_zone = local.availability_zone_1b
   tags = merge(
     {
       Name = "${local.name}-private-app-1b"
@@ -142,7 +157,7 @@ resource "aws_subnet" "private_app_1b" {
 resource "aws_subnet" "private_managed_1a" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.private_managed_subnet_1a
-  availability_zone = "ap-southeast-1a"
+  availability_zone = local.availability_zone_1a
   tags = merge(
     {
       Name = "${local.name}-private-managed-1a"
@@ -154,7 +169,7 @@ resource "aws_subnet" "private_managed_1a" {
 resource "aws_subnet" "private_managed_1b" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.private_managed_subnet_1b
-  availability_zone = "ap-southeast-1b"
+  availability_zone = local.availability_zone_1b
   tags = merge(
     {
       Name = "${local.name}-private-managed-1b"
@@ -284,7 +299,7 @@ resource "aws_route_table_association" "private_managed_rt_1b" {
 resource "aws_subnet" "private_data_1a" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.private_data_subnet_1a
-  availability_zone = "ap-southeast-1a"
+  availability_zone = local.availability_zone_1a
   tags = merge(
     {
       Name = "${local.name}-private-data-1a"
@@ -296,7 +311,7 @@ resource "aws_subnet" "private_data_1a" {
 resource "aws_subnet" "private_data_1b" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.private_data_subnet_1b
-  availability_zone = "ap-southeast-1b"
+  availability_zone = local.availability_zone_1b
   tags = merge(
     {
       Name = "${local.name}-private-data-1b"
@@ -338,7 +353,7 @@ resource "aws_route_table_association" "private_data_rt_1b" {
 resource "aws_subnet" "intra_shared_1a" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.intra_shared_subnet_1a
-  availability_zone = "ap-southeast-1a"
+  availability_zone = local.availability_zone_1a
   tags = merge(
     {
       Name = "${local.name}-intra-shared-1a"
@@ -350,7 +365,7 @@ resource "aws_subnet" "intra_shared_1a" {
 resource "aws_subnet" "intra_shared_1b" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = local.intra_shared_subnet_1b
-  availability_zone = "ap-southeast-1b"
+  availability_zone = local.availability_zone_1b
   tags = merge(
     {
       Name = "${local.name}-intra-shared-1b"
@@ -429,5 +444,40 @@ output "intra_shared_subnet_ids" {
   value = [
     aws_subnet.intra_shared_1a.id,
     aws_subnet.intra_shared_1b.id,
+  ]
+}
+
+output "public_subnet_cidr_blocks" {
+  value = [
+    aws_subnet.public_subnet_1a.cidr_block,
+    aws_subnet.public_subnet_1b.cidr_block,
+  ]
+}
+
+output "private_app_subnet_cidr_blocks" {
+  value = [
+    aws_subnet.private_app_1a.cidr_block,
+    aws_subnet.private_app_1b.cidr_block,
+  ]
+}
+
+output "private_managed_subnet_cidr_blocks" {
+  value = [
+    aws_subnet.private_managed_1a.cidr_block,
+    aws_subnet.private_managed_1b.cidr_block,
+  ]
+}
+
+output "private_data_subnet_cidr_blocks" {
+  value = [
+    aws_subnet.private_data_1a.cidr_block,
+    aws_subnet.private_data_1b.cidr_block,
+  ]
+}
+
+output "intra_shared_subnet_cidr_blocks" {
+  value = [
+    aws_subnet.intra_shared_1a.cidr_block,
+    aws_subnet.intra_shared_1b.cidr_block,
   ]
 }
