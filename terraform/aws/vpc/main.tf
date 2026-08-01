@@ -24,8 +24,8 @@ locals {
   private_managed_subnet_1b = "10.253.2.64/26"
   intra_shared_subnet_1a    = "10.253.3.0/26"
   intra_shared_subnet_1b    = "10.253.3.64/26"
-  private_app_subnet_1a     = "10.253.8.0/22"
-  private_app_subnet_1b     = "10.253.12.0/22"
+  private_app_subnet_1a     = "10.253.4.0/22"
+  private_app_subnet_1b     = "10.253.8.0/22"
   tags = {
     Environment = "dev"
     ManagedBy   = "Terraform"
