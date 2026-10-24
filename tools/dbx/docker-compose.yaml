@@ -1,0 +1,13 @@
+name: dbx
+services:
+  dbx:
+    image: docker.io/t8y2/dbx:0.6.52
+    container_name: dbx
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      DBX_PASSWORD: change_me
+      DBX_DISABLE_PASSWORD: "true"
+      DBX_PORT: "4224"
+      DBX_PUBLIC_BASE_PATH: /
+    volumes: [./data:/app/data]

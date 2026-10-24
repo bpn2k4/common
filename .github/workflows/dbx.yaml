@@ -1,0 +1,52 @@
+name: dbx
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Bump
+        id: bump
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./tools/dbx/bump.sh
+      - name: Create pull request
+        if: steps.bump.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.bump.outputs.version }}
+          BRANCH: dbx/bump
+        run: |
+          title="update dbx to $VERSION"
+          file=tools/dbx/docker-compose.yaml
+          base="$(git rev-parse HEAD)"
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/heads/$BRANCH" -f sha="$base" -F force=true \
+            || gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/heads/$BRANCH" -f sha="$base"
+          jq -n \
+            --arg repo "$GITHUB_REPOSITORY" --arg branch "$BRANCH" --arg title "$title" \
+            --arg base "$base" --arg path "$file" --arg contents "$(base64 -w0 "$file")" \
+            '{
+              query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { url } } }",
+              variables: { input: {
+                branch: { repositoryNameWithOwner: $repo, branchName: $branch },
+                message: { headline: $title },
+                expectedHeadOid: $base,
+                fileChanges: { additions: [{ path: $path, contents: $contents }] }
+              } }
+            }' | gh api graphql --input -
+          pr="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')"
+          if [[ -n "$pr" ]]; then
+            gh pr edit "$pr" --title "$title" --body "Bump \`docker.io/t8y2/dbx\` to \`$VERSION\`."
+          else
+            gh pr create --base "${{ github.event.repository.default_branch }}" --head "$BRANCH" \
+              --title "$title" --body "Bump \`docker.io/t8y2/dbx\` to \`$VERSION\`."
+          fi
