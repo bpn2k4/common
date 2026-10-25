@@ -1,7 +1,7 @@
 name: dbx
 services:
   dbx:
-    image: docker.io/t8y2/dbx:0.6.52
+    image: docker.io/t8y2/dbx:0.6.54
     container_name: dbx
     restart: unless-stopped
     network_mode: host
